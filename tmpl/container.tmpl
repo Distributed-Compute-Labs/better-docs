@@ -174,7 +174,9 @@
         // symbols that are assigned to module.exports are not globals, even though they're not a memberof anything
         if (isGlobalPage && members && members.length && members.forEach) {
             members = members.filter(function(m) {
-                return m.longname && m.longname.indexOf('module:') !== 0;
+                return m.longname
+                    && m.longname.indexOf('module:') !== 0
+                    && m.access !== 'private';
             });
         }
         if (members && members.length && members.forEach) {
@@ -192,6 +194,13 @@
     <?js
         var methods = self.find({kind: 'function', memberof: isGlobalPage ? {isUndefined: true} : doc.longname});
         if (methods && methods.length && methods.forEach) {
+            // Remove duplicated definition, keep overwritten by the converter
+            methods = methods.reduce((acc, method) => {
+                if(method.access === 'private') return acc
+                var index = acc.findIndex(m => m.id === method.id)
+                index < 0 ? acc.push(method) : acc[index] = method
+                return acc
+            }, [])
     ?>
         <div class='vertical-section'>
             <h1>Methods</h1>
